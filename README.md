@@ -49,3 +49,13 @@ PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/storage
 ```
 
 Run the server first. Tests use `/usr/bin/chromium`; `smoke.cjs` also accepts `CHROMIUM_PATH`. Smoke tests cover desktop/mobile input, expense creation and editing, settlements, search, budget updates, plan conversion, theme persistence, and horizontal overflow. Storage tests cover Unicode snapshot links, exports/imports, malformed backups, offline reload, and denied localStorage access. Test data stays in isolated browser contexts.
+
+## Dashboard shortcuts
+
+The Overview cards are keyboard-accessible shortcuts. Spending opens this month's hangouts and shows your individual share; search respects the date filter, and All time restores the complete history. Upcoming plans opens the plans page, and Monthly budget left opens Budgets.
+
+Choose **Me** beside your participant name when creating or editing a hangout. This selection is saved independently of your name. Older hangouts use the participant named You, or the first participant when that name has been changed; open Edit to correct the selection if needed. Existing browser data is retained.
+
+Run `PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/dashboard.cjs` with the local server running for desktop/mobile regression checks of the cards, monthly filtering, participant identity and cent rounding.
+
+Screenshot previews use demo data: [desktop cards](docs/previews/dashboard-desktop.png), [mobile cards](docs/previews/dashboard-mobile.png), and [monthly spending](docs/previews/monthly-spending.png).
