@@ -1,0 +1,24 @@
+{
+  "name": "Palsum \u2014 Better together",
+  "short_name": "Palsum",
+  "description": "Hangouts, shared bills and budgets \u2014 better together.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fcf6e9",
+  "theme_color": "#e45737",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
