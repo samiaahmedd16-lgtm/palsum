@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import config from '../vite.config.js';
+test('production build refuses emulator endpoints',()=>{const before=process.env.VITE_USE_FIREBASE_EMULATORS;try{process.env.VITE_USE_FIREBASE_EMULATORS='true';assert.throws(()=>config({mode:'production'}),/Refusing a production build/);assert.doesNotThrow(()=>config({mode:'test'}))}finally{if(before===undefined)delete process.env.VITE_USE_FIREBASE_EMULATORS;else process.env.VITE_USE_FIREBASE_EMULATORS=before}});
