@@ -1,7 +1,7 @@
 const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const assert=require('node:assert/strict');
 (async()=>{const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});for(const mobile of [false,true]){
  const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:1000}});const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());await page.goto('http://127.0.0.1:8000');await page.waitForFunction(()=>!!window.PalsumAccount);
- await page.locator('[data-account-button]').click();assert.equal(await page.locator('[data-account-action="google"]').isDisabled(),true);assert.equal(await page.locator('[data-account-action="phone"]').isDisabled(),true);
+ await page.locator('[data-account-button]').click();assert.equal(await page.locator('[data-account-action="google"]').isDisabled(),true);assert.equal(await page.locator('[data-account-action="phone"]').count(),0);
  await page.screenshot({animations:'disabled',path:`/workspace/palsum-accounts-${mobile?'mobile':'desktop'}.png`,fullPage:false});await page.locator('[data-account-action="guest"]').click();
  await page.locator('[data-action="newHangout"]').click();await page.locator('[name="place"]').fill('Guest chai');await page.locator('.pname').nth(1).fill('Sara');await page.locator('.ppaid').first().fill('1200');await page.locator('[type="submit"]').click();await page.locator('[data-action="closeDetails"]').click();
  await page.locator('[data-action="newHangout"]').click();assert.match(await page.locator('.account-modal').innerText(),/Guests get one hangout/);await page.locator('[data-action="close"]').click();

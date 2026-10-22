@@ -13,10 +13,11 @@ Create a **Cloud Firestore** database. Choose a region near your users, start in
 In **Authentication → Sign-in method**, enable:
 
 - **Google**: choose your public project name and support email.
-- **Phone**: configure permitted SMS regions. Firebase phone verification can require the Blaze billing plan and incurs SMS charges. Set a billing budget/alerts and review SMS limits before enabling real numbers. Use Firebase's fictional test phone numbers while developing; do not hard-code their codes in the app.
-- **Anonymous**: provides a guest account that can later link to Google or a phone number.
+- **Anonymous**: provides a guest account that can later link to Google.
 
-In **Authentication → Settings → Authorized domains**, add `palsum.vercel.app` and each exact preview hostname you use. Add `localhost` when developing locally if it is absent. Google OAuth test-mode consent configurations also require your testers to be allowed in the Google Cloud consent screen.
+In **Authentication → Settings → Authorized domains**, add `palsum.vercel.app` and `palsum-git-codex-accounts-and-cloud-samiaahmedd16-lgtm.vercel.app` (the current branch preview). Add other exact preview hostnames if you use them. Add `localhost` when developing locally if it is absent. Google OAuth test-mode consent configurations also require your testers to be allowed in the Google Cloud consent screen.
+
+Google and anonymous authentication can start on Firebase’s Spark plan within its quotas.
 
 ## 3. Set the web configuration in Vercel
 
@@ -56,20 +57,21 @@ npx --yes firebase-tools login
 npx --yes firebase-tools deploy --only firestore:rules --project YOUR_FIREBASE_PROJECT_ID
 ```
 
-A project owner must run this step. No account was provisioned and no paid service was enabled by the code changes.
+Alternatively, open **Firestore Database → Rules**, replace the editor with the complete contents of [`firestore.rules`](../firestore.rules), and click **Publish**.
 
-Validation completed in onboarding: all 11 unit tests and all six Firestore access-rule tests passed. Firebase Auth emulator checks passed for Google account linking, phone-code validation and guest upgrades. The full browser workflow also passed cloud saves, second-device restore, live updates, offline reconnection, revision-conflict preservation, account isolation and guest-to-phone upgrades retaining the first hangout. GitHub CI passed the build and emulator rule checks. These checks use demo identities; real Google authorization and real SMS still require your project and provider settings.
+A project owner must deploy the rules. No account was provisioned and no paid service was enabled by the code changes.
+
+Validation completed in onboarding: all 11 unit tests and all six Firestore access-rule tests passed. Firebase Auth emulator checks passed for Google account linking, Google credential sign-in and guest upgrades. The full browser workflow also passed cloud saves, second-device restore, live updates, offline reconnection, revision-conflict preservation, account isolation and guest-to-Google upgrades retaining the first hangout. GitHub CI passed the build and emulator rule checks. These checks use demo identities; real Google authorization still requires your project and provider settings.
 
 ## 5. Check the actual preview, then promote
 
 1. Sign in with Google. Create a hangout, set a budget, and create a future plan. Confirm **Saved to your account**, not merely a device-save message.
 2. Sign in with the same Google account in a different browser or phone. Confirm all three load. Edit on one device and verify the other refreshes when no form is being edited.
-3. Try a Firebase test phone number, a wrong code, and the correct code. Test a real SMS only after billing and region settings are intentional.
-4. Continue as guest. Create a hangout, edit it, then try a second hangout, a future plan, a different backup and deleting/recreating a hangout. The app must require sign-in for additional entries, and rules must reject direct API attempts to create a second ID.
-5. Upgrade the guest to a new Google/phone account. Linking retains its Firebase user ID. Signing into an existing account keeps the device draft separate; use **Bring my device hangouts into this account** to merge it explicitly.
-6. Sign out, then sign into a different account. Previous account data must not appear. A guest/device draft can still appear on that same browser, because it belongs to the browser rather than either signed-in account.
-7. Go offline, edit a saved entry, reconnect, and confirm its save status. Concurrent edits from another device stop at a revision conflict and preserve the device draft. Export the draft before choosing **Load latest cloud copy** if you want to retain both versions.
-8. Promote the tested Vercel preview to Production, or merge this branch into your production branch, and make the four Firebase variables available to Production too. Add the final production hostname to Firebase authorized domains.
+3. Continue as guest. Create a hangout, edit it, then try a second hangout, a future plan, a different backup and deleting/recreating a hangout. The app must require sign-in for additional entries, and rules must reject direct API attempts to create a second ID.
+4. Upgrade the guest to a new Google account. Linking retains its Firebase user ID. Signing into an existing account keeps the device draft separate; use **Bring my device hangouts into this account** to merge it explicitly.
+5. Sign out, then sign into a different account. Previous account data must not appear. A guest/device draft can still appear on that same browser, because it belongs to the browser rather than either signed-in account.
+6. Go offline, edit a saved entry, reconnect, and confirm its save status. Concurrent edits from another device stop at a revision conflict and preserve the device draft. Export the draft before choosing **Load latest cloud copy** if you want to retain both versions.
+7. Promote the tested Vercel preview to Production, or merge this branch into your production branch, and make the four Firebase variables available to Production too. Add the final production hostname to Firebase authorized domains.
 
 ## 6. Install on phones
 
@@ -80,7 +82,7 @@ The service worker caches only public shell assets. It does not cache authentica
 ## Data and limits
 
 - Firestore paths are `users/{uid}/settings/main`, `users/{uid}/hangouts/{id}` and `users/{uid}/plans/{id}`. Each entry has its own document. Signed-in users can maintain many entries rather than filling one giant ledger document.
-- Guests have one permitted hangout ID per anonymous account. A new anonymous identity after clearing browser data is a new account; this is not a device-wide fraud-prevention system. Guest access is not recoverable on another device until linked to Google/phone.
+- Guests have one permitted hangout ID per anonymous account. A new anonymous identity after clearing browser data is a new account; this is not a device-wide fraud-prevention system. Guest access is not recoverable on another device until linked to Google.
 - Existing local-only data is preserved and can be imported into an account explicitly. Account preferences win on import, and duplicate IDs are not silently overwritten.
 - The app calculates equal splits and suggested payments. It does not process money.
 - Shared links remain read-only snapshots containing names and amounts. Signing in does not turn those links into private or synchronized groups.
@@ -101,4 +103,4 @@ PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/auth-br
 PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/cloud-browser.cjs
 ```
 
-The full cloud suite exercises actual Firebase client SDK calls against both emulators and the repository's rules. It creates only demo users and sends no real SMS. Run the rules suite before the browser suites, because rules tests clear their demo database between cases.
+The full cloud suite exercises actual Firebase client SDK calls against both emulators and the repository's rules. It creates only demo users and uses emulator Google credentials instead of opening the external Google popup. Guest upgrades use the emulator linking endpoint followed by a reload; the separate Auth SDK test checks credential linking. These suites do not verify the app’s popup flow or live Google OAuth. Run the rules suite before the browser suites, because rules tests clear their demo database between cases.

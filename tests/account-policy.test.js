@@ -15,8 +15,8 @@ test('bringing device data into an account preserves account preferences and exi
  const result=mergeLedgers(account,{...emptyLedger(),hangouts:[{...h('same'),place:'old data'},h('new')]});
  assert.equal(result.budget,20000);assert.equal(result.theme,'night');assert.equal(result.hangouts.length,2);assert.equal(result.hangouts[0].place,'Chai');
 });
-test('auth errors distinguish cancelled, expired and unavailable verification',()=>{
+test('auth errors explain Google cancellation, blocked popups and unauthorized domains',()=>{
  assert.match(describeAuthError({code:'auth/popup-closed-by-user'}),/cancelled/);
- assert.match(describeAuthError({code:'auth/code-expired'}),/expired/);
- assert.match(describeAuthError({code:'auth/billing-not-enabled'}),/not available/);
+ assert.match(describeAuthError({code:'auth/popup-blocked'}),/Allow popups/);
+ assert.match(describeAuthError({code:'auth/unauthorized-domain'}),/web address/);
 });

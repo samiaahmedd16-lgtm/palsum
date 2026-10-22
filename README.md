@@ -2,9 +2,9 @@
 
 A playful expense-sharing PWA for hangouts, equal splits, personal budgets and future plans.
 
-This branch adds Firebase Google/phone sign-in, anonymous guest accounts and account-specific cloud storage. **Live accounts require a Firebase project and deployed access rules.** Until configured, one device-only guest hangout works and account sign-in is visibly unavailable.
+This branch adds Firebase Google sign-in, anonymous guest accounts and account-specific cloud storage. **Live accounts require a Firebase project and deployed access rules.** Until configured, one device-only guest hangout works and account sign-in is visibly unavailable.
 
-Follow [Firebase and Vercel setup](docs/FIREBASE_SETUP.md) to turn on real accounts. Code does not provision a project, authorize your account or enable SMS billing.
+Follow [Firebase and Vercel setup](docs/FIREBASE_SETUP.md) to turn on real accounts. Code does not provision a project, authorize your account.
 
 ## Develop
 
@@ -40,7 +40,7 @@ PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/storage
 PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/guest.cjs
 ```
 
-The production browser suites run without Firebase config. They verify the local guest workflow; they do not establish that live Google, SMS or Firestore access works. The separate Auth emulator tests cover anonymous-to-Google linking and phone-code UI. Database rules require the Firestore emulator. The full cloud browser suite also tests actual Firebase SDK saves/restores, offline conflicts and account upgrades against both emulators; see the setup guide and CI workflow.
+The production browser suites run without Firebase config. They verify the local guest workflow; they do not establish that live Google or Firestore access works. The separate Auth emulator tests cover anonymous-to-Google linking and Google credential sign-in. Database rules require the Firestore emulator. The full cloud browser suite also tests actual Firebase SDK saves/restores, offline conflicts and account upgrades against both emulators; see the setup guide and CI workflow.
 
 ## Phone installation and data
 
@@ -54,4 +54,6 @@ Sharing still generates read-only snapshots, not live group editing. Anyone with
 
 ## Previews
 
-Demo screenshots: [account screen](docs/previews/accounts-desktop.png), [mobile account screen](docs/previews/accounts-mobile.png), [phone verification in the Auth emulator](docs/previews/phone-verification-demo.png), [dashboard shortcuts](docs/previews/dashboard-desktop.png).
+[Open the branch preview](https://palsum-git-codex-accounts-and-cloud-samiaahmedd16-lgtm.vercel.app). Google sign-in activates after the Firebase setup above.
+
+Demo screenshots: [account screen](docs/previews/accounts-desktop.png), [mobile account screen](docs/previews/accounts-mobile.png), [dashboard shortcuts](docs/previews/dashboard-desktop.png).

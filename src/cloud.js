@@ -1,6 +1,6 @@
 import {clone,emptyLedger,guestWriteError,mergeLedgers,describeAuthError} from './account-policy.js';
 import {LedgerSync} from './ledger-sync.js';
-let initializeApp,getAuth,setPersistence,browserLocalPersistence,inMemoryPersistence,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signInWithCredential,linkWithPopup,linkWithCredential,PhoneAuthProvider,RecaptchaVerifier,signInAnonymously,signOut,connectAuthEmulator,getFirestore,connectFirestoreEmulator,createFirebaseDriver;
+let initializeApp,getAuth,setPersistence,browserLocalPersistence,inMemoryPersistence,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signInWithCredential,linkWithPopup,signInAnonymously,signOut,connectAuthEmulator,getFirestore,connectFirestoreEmulator,createFirebaseDriver;
 
 const ui=window.PalsumUI;
 const config={apiKey:import.meta.env.VITE_FIREBASE_API_KEY,authDomain:import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,projectId:import.meta.env.VITE_FIREBASE_PROJECT_ID,appId:import.meta.env.VITE_FIREBASE_APP_ID};
@@ -8,26 +8,25 @@ const configured=Object.values(config).every(v=>typeof v==='string'&&v.trim());
 const emulator=import.meta.env.VITE_USE_FIREBASE_EMULATORS==='true';
 if(emulator&&import.meta.env.MODE!=='test'&&import.meta.env.MODE!=='development')throw new Error('Firebase emulators are not permitted in production builds.');
 const statusText={saved:'Saved to your account',saving:'Saving to your account…',offline:'Offline · changes on this device',error:'Not saved yet · retry',conflict:'Newer cloud changes · review', 'update-available':'Update available · review',loading:'Opening your account…',device:'Guest · saved on this device',session:'Guest · session only · export a backup'};
-let auth,db,user=null,sync=null,unsubscribe=null,verifier=null,verificationId=null,busy=false,sessionGeneration=0,sessionStatus=ui.hasStorage()?'device':'session',ready=!configured;
+let auth,db,user=null,sync=null,unsubscribe=null,busy=false,sessionGeneration=0,sessionStatus=ui.hasStorage()?'device':'session',ready=!configured;
 const initialDevice=read('palsum.v1');const deviceDraft=ui.validData(initialDevice)?initialDevice:clone(ui.getData());
 let usedId=read('palsum.guest-used')?.id||deviceDraft.hangouts[0]?.id||'';
 if(usedId)write('palsum.guest-used',{id:usedId});
 function read(key){try{return JSON.parse(localStorage.getItem(key))}catch{return null}}
 function write(key,value){try{localStorage.setItem(key,JSON.stringify(value));return true}catch{return false}}
-function currentName(){return user&&!user.isAnonymous?(user.displayName||user.phoneNumber||user.email||'Your account'):'Guest hangout'}
+function currentName(){return user&&!user.isAnonymous?(user.displayName||user.email||'Your account'):'Guest hangout'}
 function isMember(){return !!user&&!user.isAnonymous}
 function updateChrome(){
   document.querySelectorAll('[data-account-status]').forEach(el=>el.textContent=statusText[sessionStatus]||statusText.device);
   document.querySelectorAll('[data-account-name]').forEach(el=>el.textContent=currentName());
-  document.querySelectorAll('[data-account-caption]').forEach(el=>el.textContent=isMember()?'Google or phone account':'One hangout · sign in for more');
+  document.querySelectorAll('[data-account-caption]').forEach(el=>el.textContent=isMember()?'Google account':'One hangout · sign in for more');
   document.querySelectorAll('[data-account-button]').forEach(el=>el.textContent=isMember()?'Account':'Sign in');
-  document.querySelectorAll('[data-account-action="google"],[data-account-action="phone"]').forEach(el=>el.disabled=!configured||!auth||busy);
+  document.querySelectorAll('[data-account-action="google"]').forEach(el=>el.disabled=!configured||!auth||busy);
 }
-function closePhone(){verifier?.clear();verifier=null;verificationId=null}
 function error(message){const node=document.getElementById('account-error');if(node){node.textContent=message;node.hidden=false}else ui.toast(message)}
 function message(message){const node=document.getElementById('account-message');if(node){node.textContent=message;node.hidden=false}else ui.toast(message)}
-function setBusy(value){busy=value;document.querySelectorAll('[data-account-form] button,[data-account-action="google"]').forEach(el=>el.disabled=value);document.querySelectorAll('[data-account-action="google"]').forEach(el=>el.disabled=value||!configured)}
-function dialog(html){closePhone();ui.openDialog(`<div class="overlay" data-overlay><div class="modal account-modal" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`);updateChrome()}
+function setBusy(value){busy=value;document.querySelectorAll('[data-account-action="google"]').forEach(el=>el.disabled=value);document.querySelectorAll('[data-account-action="google"]').forEach(el=>el.disabled=value||!configured)}
+function dialog(html){ui.openDialog(`<div class="overlay" data-overlay><div class="modal account-modal" role="dialog" aria-modal="true" tabindex="-1">${html}</div></div>`);updateChrome()}
 function dialogHead(title,subtitle){return `<div class="modal-head"><div><span class="eyebrow">YOUR GOOD TIMES, KEPT SAFE</span><h2>${title}</h2><p>${subtitle}</p></div><button class="close" aria-label="Close dialog" data-action="close">×</button></div>`}
 function notices(){return '<p id="account-error" class="account-error" role="alert" hidden></p><p id="account-message" class="notice" role="status" hidden></p>'}
 function openAccount(reason=''){
@@ -36,37 +35,9 @@ function openAccount(reason=''){
     dialog(`${dialogHead('Your ledger, wherever you go',ui.escape(currentName()))}<div class="account-cloud"><span class="account-cloud-icon">☁</span><strong>${statusText[sessionStatus]}</strong><p>Hangouts, plans, budget and theme belong to this account. Sign in with the same account on another device to load them.</p></div>${notices()}<div class="account-stack"><button class="btn secondary" data-account-action="retry">Retry saving</button><button class="btn secondary" data-account-action="latest">Load latest cloud copy</button><button class="btn secondary" data-action="export">Download a backup</button>${localAvailable?'<button class="btn ghost" data-account-action="import-device">Bring my device hangouts into this account</button>':''}<button class="btn danger" data-account-action="signout">Sign out</button></div>`);
     return;
   }
-  dialog(`${dialogHead('Keep the memories.<br>Keep the receipts.',reason||'One account. Your hangouts on every device.')}<div class="account-perks"><span>✓ Cloud-saved history</span><span>✓ More hangouts</span><span>✓ Pick up on another phone</span></div>${!configured?'<p class="notice">Account sign-in is being set up. You can still try one hangout as a guest and export a backup.</p>':''}${notices()}<div class="account-stack"><button class="btn google-button" data-account-action="google" ${configured?'':'disabled'}><span aria-hidden="true">G</span> Continue with Google</button><button class="btn secondary" data-account-action="phone" ${configured?'':'disabled'}>Continue with phone number</button><div class="account-or"><span>or take it for a spin</span></div><button class="btn ghost" data-account-action="guest">Continue as guest · 1 hangout</button></div><p class="explain account-footnote">Guest access is limited to one hangout per guest account. Sign in to save more and use future plans. Guest access stays tied to this browser. Sign in before switching phones or clearing browser data. Existing device data stays here until you choose to import it.</p>`);
-}
-function openPhone(){
-  if(!configured)return;
-  dialog(`${dialogHead('Your number. Your ledger.','We’ll text you a code to sign in.')}<form id="phoneform" data-account-form><div class="field"><label for="phone-number">Phone number, including country code</label><input id="phone-number" name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+923001234567" required maxlength="20"></div><p class="explain">Your number is sent to Google for verification and abuse prevention. SMS delivery depends on your region.</p><div id="recaptcha-container"></div>${notices()}<div class="modal-actions"><button type="button" class="btn secondary" data-account-action="account">Back</button><button class="btn" type="submit">Send code</button></div></form>`);
-  verifier=new RecaptchaVerifier(auth,'recaptcha-container',{size:window.matchMedia('(max-width:420px)').matches?'compact':'normal'});
-  verifier.render().catch(e=>error(describeAuthError(e)));
-  document.getElementById('phoneform').addEventListener('submit',async event=>{
-    event.preventDefault();if(busy)return;
-    const number=document.getElementById('phone-number').value.replace(/[\s()-]/g,'');
-    if(!/^\+[1-9]\d{7,14}$/.test(number))return error('Include your country code, for example +923001234567.');
-    setBusy(true);
-    try{
-      verificationId=await new PhoneAuthProvider(auth).verifyPhoneNumber(number,verifier);
-      const verification=verificationId;
-      dialog(`${dialogHead('Check your messages',`Enter the code sent to ${ui.escape(number)}.`)}<form id="codeform" data-account-form><div class="field"><label for="phone-code">6-digit verification code</label><input id="phone-code" name="code" autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" required></div>${notices()}<div class="modal-actions"><button type="button" class="btn secondary" data-account-action="phone">Send a new code</button><button class="btn" type="submit">Verify & sign in</button></div></form>`);
-      document.getElementById('codeform').addEventListener('submit',async e=>{
-        e.preventDefault();if(busy)return;setBusy(true);
-        try{await finishCredential(PhoneAuthProvider.credential(verification,document.getElementById('phone-code').value));ui.closeDialog();ui.toast('Signed in. Your ledger is opening.')}catch(e){error(describeAuthError(e))}finally{setBusy(false)}
-      });
-    }catch(e){error(describeAuthError(e));verifier?.clear();verifier=null;message('Please go Back and reopen phone sign-in to retry the verification check.')}finally{setBusy(false)}
-  });
+  dialog(`${dialogHead('Keep the memories.<br>Keep the receipts.',reason||'One account. Your hangouts on every device.')}<div class="account-perks"><span>✓ Cloud-saved history</span><span>✓ More hangouts</span><span>✓ Pick up on another phone</span></div>${!configured?'<p class="notice">Account sign-in is being set up. You can still try one hangout as a guest and export a backup.</p>':''}${notices()}<div class="account-stack"><button class="btn google-button" data-account-action="google" ${configured?'':'disabled'}><span aria-hidden="true">G</span> Continue with Google</button><div class="account-or"><span>or take it for a spin</span></div><button class="btn ghost" data-account-action="guest">Continue as guest · 1 hangout</button></div><p class="explain account-footnote">Guest access is limited to one hangout per guest account. Sign in to save more and use future plans. Guest access stays tied to this browser. Sign in before switching phones or clearing browser data. Existing device data stays here until you choose to import it.</p>`);
 }
 function stashGuest(){if(user?.isAnonymous){const draft=ui.getData();if(ui.validData(draft)){Object.assign(deviceDraft,clone(draft));write('palsum.v1',draft)}}}
-async function finishCredential(credential){
-  stashGuest();
-  if(user?.isAnonymous){
-    try{await linkWithCredential(user,credential);await user.getIdToken(true);await openSession(user);return}catch(e){if(e.code!=='auth/credential-already-in-use'&&e.code!=='auth/email-already-in-use')throw e}
-  }
-  await signInWithCredential(auth,credential);
-}
 async function googleSignIn(){
   if(!configured||busy)return;setBusy(true);
   stashGuest();const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});
@@ -99,7 +70,7 @@ async function openSession(nextUser){
   if(!user){ready=true;sessionStatus=ui.hasStorage()?'device':'session';if(previousUser)ui.replaceData(read('palsum.v1')||deviceDraft);updateChrome();return}
   sessionStatus='loading';updateChrome();
   const uid=user.uid;
-  // An unrelated Google/phone account always starts from its own cloud record.
+  // An unrelated Google account always starts from its own cloud record.
   const stored=read('palsum.v1');const local=ui.validData(stored)?stored:deviceDraft;
   const fallback=user.isAnonymous&&!guestWriteError(local,usedId)?local:emptyLedger();
   const driver=createFirebaseDriver(db,user,ui.validData);
@@ -113,7 +84,6 @@ async function openSession(nextUser){
 window.PalsumAccount={
   configured,
   afterRender:updateChrome,
-  closeDialog:closePhone,
   canCreate(type){return ready&&(isMember()||(type==='hangout'&&!usedId&&!sync?.usedId&&ui.getData().hangouts.length===0))},
   reason(){return !ready?'Your account is still opening. Please wait a moment.':'Guests get one hangout. Sign in to save more.'},
   open:openAccount,
@@ -128,7 +98,6 @@ document.addEventListener('click',async event=>{
   const action=event.target.closest('[data-account-action]')?.dataset.accountAction;if(!action||busy)return;
   if(action==='account')openAccount();
   if(action==='google')await googleSignIn();
-  if(action==='phone')openPhone();
   if(action==='guest'){
     if(configured&&!user){setBusy(true);try{await signInAnonymously(auth);ui.closeDialog()}catch(e){error(describeAuthError(e))}finally{setBusy(false)}}else ui.closeDialog();
   }
@@ -158,9 +127,9 @@ updateChrome();
 if(configured){
   try{
     const [sdk,driver]=await Promise.all([import('./firebase-sdk.js'),import('./firebase-driver.js')]);
-    ({initializeApp,getAuth,setPersistence,browserLocalPersistence,inMemoryPersistence,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signInWithCredential,linkWithPopup,linkWithCredential,PhoneAuthProvider,RecaptchaVerifier,signInAnonymously,signOut,connectAuthEmulator,getFirestore,connectFirestoreEmulator}=sdk);createFirebaseDriver=driver.createFirebaseDriver;
+    ({initializeApp,getAuth,setPersistence,browserLocalPersistence,inMemoryPersistence,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,signInWithCredential,linkWithPopup,signInAnonymously,signOut,connectAuthEmulator,getFirestore,connectFirestoreEmulator}=sdk);createFirebaseDriver=driver.createFirebaseDriver;
     const app=initializeApp(config);auth=getAuth(app);db=getFirestore(app);
-    if(emulator){connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});connectFirestoreEmulator(db,'127.0.0.1',8080);auth.settings.appVerificationDisabledForTesting=true}
+    if(emulator){connectAuthEmulator(auth,'http://127.0.0.1:9099',{disableWarnings:true});connectFirestoreEmulator(db,'127.0.0.1',8080)}
     try{await setPersistence(auth,browserLocalPersistence)}catch{await setPersistence(auth,inMemoryPersistence)}
     onAuthStateChanged(auth,nextUser=>void openSession(nextUser),()=>{ready=true;sessionStatus='error';updateChrome()});
   }catch{ready=true;sessionStatus='device';ui.toast('Account saving is unavailable. Your device ledger is still here.');updateChrome()}
