@@ -58,7 +58,7 @@ npx --yes firebase-tools deploy --only firestore:rules --project YOUR_FIREBASE_P
 
 A project owner must run this step. No account was provisioned and no paid service was enabled by the code changes.
 
-In this cloud workspace, the Firestore emulator JAR download is currently blocked at `storage.googleapis.com`. The needed network addition has been saved to the cloud environment draft. Review/save that change and publish the cloud environment to enable direct validation here. This is independent of the Vercel project. The Auth emulator and browser guest tests have run successfully; the database-rule suite is not yet locally verified.
+Validation completed in onboarding: all 11 unit tests and all six Firestore access-rule tests passed. Firebase Auth emulator checks passed for Google account linking, phone-code validation and guest upgrades. The full browser workflow also passed cloud saves, second-device restore, live updates, offline reconnection, revision-conflict preservation, account isolation and guest-to-phone upgrades retaining the first hangout. GitHub CI passed the build and emulator rule checks. These checks use demo identities; real Google authorization and real SMS still require your project and provider settings.
 
 ## 5. Check the actual preview, then promote
 
@@ -84,3 +84,21 @@ The service worker caches only public shell assets. It does not cache authentica
 - Existing local-only data is preserved and can be imported into an account explicitly. Account preferences win on import, and duplicate IDs are not silently overwritten.
 - The app calculates equal splits and suggested payments. It does not process money.
 - Shared links remain read-only snapshots containing names and amounts. Signing in does not turn those links into private or synchronized groups.
+
+## Optional full browser check with emulators
+
+Keep Auth and Firestore emulators running with the demo project. In a separate terminal, build an isolated demo bundle (the values below are emulator-only identifiers):
+
+```sh
+PALSUM_BUILD_DIR=.test-build VITE_FIREBASE_API_KEY=demo-key VITE_FIREBASE_AUTH_DOMAIN=demo-palsum.firebaseapp.com VITE_FIREBASE_PROJECT_ID=demo-palsum VITE_FIREBASE_APP_ID=demo-app VITE_USE_FIREBASE_EMULATORS=true npm run build -- --mode test
+PALSUM_BUILD_DIR=.test-build npm run preview -- --port 8010
+```
+
+With Playwright and Chromium available as described in the README, another terminal can run:
+
+```sh
+PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/auth-browser.cjs
+PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/cloud-browser.cjs
+```
+
+The full cloud suite exercises actual Firebase client SDK calls against both emulators and the repository's rules. It creates only demo users and sends no real SMS. Run the rules suite before the browser suites, because rules tests clear their demo database between cases.

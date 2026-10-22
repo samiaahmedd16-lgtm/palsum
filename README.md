@@ -40,7 +40,7 @@ PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/storage
 PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/guest.cjs
 ```
 
-The production browser suites run without Firebase config. They verify the local guest workflow; they do not establish that live Google, SMS or Firestore access works. The separate Auth emulator tests cover anonymous-to-Google linking and phone-code UI. Database rules require the Firestore emulator; see the setup guide and CI workflow.
+The production browser suites run without Firebase config. They verify the local guest workflow; they do not establish that live Google, SMS or Firestore access works. The separate Auth emulator tests cover anonymous-to-Google linking and phone-code UI. Database rules require the Firestore emulator. The full cloud browser suite also tests actual Firebase SDK saves/restores, offline conflicts and account upgrades against both emulators; see the setup guide and CI workflow.
 
 ## Phone installation and data
 
