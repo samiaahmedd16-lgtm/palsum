@@ -1,0 +1,26 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.palsum.debug",
+      "sha256_cert_fingerprints": [
+        "5F:4C:45:89:05:58:D4:82:F6:C2:56:ED:27:4F:E4:1D:F6:0E:84:DE:11:76:68:57:AD:F7:04:68:DF:A2:85:9F"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.palsum",
+      "sha256_cert_fingerprints": [
+        "DA:0C:4E:4B:BB:BD:F0:0F:CD:77:0D:10:AD:F2:22:AF:17:1B:70:2D:86:8E:4A:79:EE:B7:FD:F9:B0:B6:4B:5D"
+      ]
+    }
+  }
+]

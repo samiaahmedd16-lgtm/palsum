@@ -1,0 +1,29 @@
+name: Android APK checks
+on:
+  push:
+    branches: [codex/android-apks, codex/palsum-fixes]
+    paths: ['android/**', '.github/workflows/android.yml']
+  pull_request:
+    paths: ['android/**', '.github/workflows/android.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android platform and build tools
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"'
+      - name: Compile and lint both variants
+        working-directory: android
+        run: ./gradlew --no-daemon --max-workers=2 lintRelease assembleDebug assembleRelease
+      - name: Preserve validation reports
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: android-build-reports
+          path: android/app/build/reports/

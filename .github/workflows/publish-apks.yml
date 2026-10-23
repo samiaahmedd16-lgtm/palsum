@@ -1,0 +1,37 @@
+name: Publish signed APK downloads
+on:
+  push:
+    branches: [apk-downloads]
+    paths: ['palsum-*.apk', 'SHA256SUMS.txt', 'android-release.json']
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Verify download checksums
+        run: sha256sum --check SHA256SUMS.txt
+      - name: Read release identity
+        id: release
+        run: |
+          python3 - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          data = json.loads(Path('android-release.json').read_text())
+          assert re.fullmatch(r'android-v[0-9.]+-[0-9]+', data['tag'])
+          assert re.fullmatch(r'[0-9a-f]{40}', data['source_commit'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('tag=' + data['tag'] + '\nsource=' + data['source_commit'] + '\n')
+          PY
+      - name: Publish both APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          SOURCE_COMMIT: ${{ steps.release.outputs.source }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            palsum-debug.apk palsum-release.apk SHA256SUMS.txt verification.json \
+            --target "$SOURCE_COMMIT" \
+            --title "Palsum Android — Debug and Release" \
+            --notes-file APK_RELEASE_NOTES.md

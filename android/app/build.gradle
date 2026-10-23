@@ -1,0 +1,55 @@
+plugins { id 'com.android.application' }
+
+def signingDirectory = System.getenv('PALSUM_SIGNING_DIR')
+android {
+    namespace 'app.vercel.palsum'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'app.vercel.palsum'
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName '0.2.0'
+        resValue 'string', 'app_name', 'Palsum'
+        resValue 'string', 'launch_url', 'https://palsum.vercel.app/?source=android'
+    }
+    signingConfigs {
+        if (signingDirectory) {
+            debug {
+                storeFile file("${signingDirectory}/debug.p12")
+                storePassword file("${signingDirectory}/debug-password").text.trim()
+                keyAlias 'palsum-debug'
+                keyPassword file("${signingDirectory}/debug-password").text.trim()
+            }
+            release {
+                storeFile file("${signingDirectory}/release.p12")
+                storePassword file("${signingDirectory}/release-password").text.trim()
+                keyAlias 'palsum-release'
+                keyPassword file("${signingDirectory}/release-password").text.trim()
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+            debuggable true
+            resValue 'string', 'app_name', 'Palsum Debug'
+            resValue 'string', 'launch_url', 'https://palsum.vercel.app/?source=android-debug'
+        }
+        release {
+            debuggable false
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            if (signingDirectory) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.7.4'
+}

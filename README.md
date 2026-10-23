@@ -44,6 +44,11 @@ The production browser suites run without Firebase config. They verify the local
 
 ## Phone installation and data
 
+Android also has separate [Debug and signed Release APKs](https://github.com/samiaahmedd16-lgtm/palsum/releases/tag/android-v0.2.0-1).
+They install side by side and use the live website and Firebase project. See
+[Android build and signing instructions](android/README.md). iPhone installation
+continues to use Safari's Add to Home Screen.
+
 On Android, use Chrome's Install app option. On iPhone, open in Safari and use Share → Add to Home Screen. PWA installation and offline use require HTTPS or localhost.
 
 Signed-in users save hangouts, plans, budget and theme to their account, with a device cache for offline work. Other accounts cannot access those Firestore paths. Changes on different devices use a revision check; a conflict preserves the device draft instead of silently overwriting cloud data.
