@@ -9,3 +9,11 @@ firebase-debug.log
 ui-debug.log
 .vercel/
 .test-build/
+android/.gradle/
+android/**/build/
+android/local.properties
+android/outputs/
+android/**/__pycache__/
+*.jks
+*.keystore
+*.p12
