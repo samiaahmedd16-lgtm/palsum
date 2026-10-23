@@ -16,12 +16,11 @@ for(const mobile of [false,true]){
  await page.locator('[data-action="closeDetails"]').click();await page.locator('#search').click();await page.locator('#search').pressSequentially('Late night');assert.equal(await page.locator('#search').inputValue(),'Late night');assert.equal(await page.locator('.item-card').count(),1);
  await page.locator('#search').fill('nothing');assert.equal(await page.locator('.item-card').count(),0);
  await page.locator('.nav [data-view="budget"]').click();await page.locator('[data-action="editBudget"]').click();await page.locator('#budgetamount').fill('20000');await page.locator('[type="submit"]').click();assert.match(await page.locator('.stat').first().innerText(),/20,000/);
- await page.locator('.nav [data-view="plans"]').click();await page.locator('[data-action="newPlan"]').click();await page.locator('[name="place"]').fill('Pizza');await page.locator('[name="friends"]').fill('Sara');await page.locator('[name="estimate"]').fill('1000');await page.locator('[type="submit"]').click();
- await page.locator('[data-action="convertPlan"]').click();assert.equal(await page.locator('.ppaid').first().inputValue(),'0');await page.locator('[data-action="removePerson"]').last().click();await page.locator('.ppaid').first().fill('2000');await page.locator('[type="submit"]').click();await page.locator('[data-action="closeDetails"]').click();await page.locator('.nav [data-view="plans"]').click();assert.equal(await page.locator('.item-card').count(),0);
+ await page.locator('.nav [data-view="dashboard"]').click();await page.locator('[data-action="newHangout"]').click();await page.locator('.account-modal').waitFor();assert.match(await page.locator('.account-modal').innerText(),/Guests get one hangout/);await page.locator('[data-action="close"]').click();
  await page.locator('.nav [data-view="themes"]').click();await page.locator('button[data-theme="night"]').click();assert.equal(await page.locator('body').getAttribute('data-theme'),'night');await page.reload();assert.equal(await page.locator('body').getAttribute('data-theme'),'night');
  await page.locator('.nav [data-view="themes"]').click();await page.locator('button[data-theme="lavender"]').click();await page.locator('.nav [data-view="dashboard"]').click();
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.screenshot({path:`/workspace/palsum-${mobile?'mobile':'desktop'}.png`,fullPage:true});
- assert.deepEqual(errors,[]);console.log(`${mobile?'Mobile':'Desktop'}: typing, create/edit, settlements, sharing, search, budget, plan conversion, theme persistence and layout passed`);await context.close();
+ assert.deepEqual(errors,[]);console.log(`${mobile?'Mobile':'Desktop'}: typing, create/edit, settlements, sharing, search, budget, guest cap, theme persistence and layout passed`);await context.close();
 }await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

@@ -1,61 +1,59 @@
-# Palsum — Better together
+# Palsum
 
-A playful, installable expense-sharing web app (PWA) for group hangouts and shared expenses. No npm required.
+A playful expense-sharing PWA for hangouts, equal splits, personal budgets and future plans.
 
-## Included
-- Hangouts: place, date, friends, contributions, equal-share calculations, simplified suggested settlements
-- Read-only hangout snapshot links (generated URLs contain friends’ names and amounts)
-- Hangout history, search, future plans, budgets, threshold and projected-spending warnings
-- Five changeable themes, offline cached app shell, home-screen installation
-- JSON export/import for backups
+This branch adds Firebase Google sign-in, anonymous guest accounts and account-specific cloud storage. **Live accounts require a Firebase project and deployed access rules.** Until configured, one device-only guest hangout works and account sign-in is visibly unavailable.
 
-## Publish and share
-1. Visit https://vercel.com/drop and sign in.
-2. Upload the **contents of this folder** (index.html, sw.js, manifest.webmanifest, icons/) or the ZIP.
-3. Deploy your project as `palsum` if available. Share the resulting HTTPS URL.
-4. On an Android phone, open the URL in Chrome and select Install app. On iPhone, use Share → Add to Home Screen. Desktop browsers offer Install app when supported.
+Follow [Firebase and Vercel setup](docs/FIREBASE_SETUP.md) to turn on real accounts. Code does not provision a project, authorize your account.
 
-You can also run locally by opening index.html, but **PWA installation and service-worker offline use require HTTPS or localhost**. For local PWA tests, `python3 -m http.server 8000` then navigate to http://localhost:8000.
+## Develop
 
-## Important limits before inviting real users
-- **No shared backend or accounts yet**. Each person’s edits and historical data stay in their own browser.
-- Hangout links are read-only snapshots, **not synchronized**. Everyone sees the snapshot included in the link; edits don't propagate. They may expose names/amounts to anyone with the link.
-- Install means a progressive web app, **not** an APK or App Store listing.
-- Equal splits only, no payment processing; the app suggests rather than completes transfers.
-- This is a prototype; never store confidential or sensitive financial information here.
+Node 22.12+ is required.
 
-## Next production phase
-Add sign-in, database (e.g. Firebase/Supabase), private group permissions, short live share IDs, unequal splits and payment status.
+```sh
+npm ci
+cp .env.example .env.local
+# Fill only the Firebase web config values when you have a project.
+npm run dev
+```
 
-## This revision
+For the production bundle: `npm run build`, then `npm run preview`.
 
-- Fixed delegated clicks matching `body[data-theme]`, which re-rendered the entire app on input clicks and swallowed other actions.
-- Added a paper-and-sticker visual style with local font fallbacks and no external font dependencies.
-- Replaced budget prompts with a validated form, added dialog keyboard controls and accessible input names.
-- Plan conversion now starts with actual contributions at zero, retains invited friends, and removes the plan only after the expense is saved, avoiding double counting.
-- Browser storage failures no longer prevent startup. Invalid backups are rejected before replacing saved data. Budget shares use the same cent rounding as settlements.
-- Updated the offline cache version and PWA theme colors.
+Vercel uses the committed `vercel.json`: install `npm ci`, build `npm run build`, output `dist`. The older instructions to deploy the source folder with no build no longer apply to this branch.
 
-## Development and validation
+## Verify
 
-The app has no build step or runtime packages. Start from this directory with `python3 -m http.server 8000`.
+```sh
+npm test
+npm run build
+```
 
-Optional browser regression tests require Playwright and Chromium. To keep test dependencies outside the app:
+The unit suite verifies guest limits, account/device merges, serial saves, reconnect behavior, conflict preservation, account-switch isolation and production emulator guards.
+
+Existing browser suites require Playwright and Chromium. With the production preview on port 8000:
 
 ```sh
 npm install --prefix /tmp/palsum-browser --cache /tmp/palsum-npm-cache playwright
 PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/smoke.cjs
+PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/dashboard.cjs
 PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/storage.cjs
+PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/guest.cjs
 ```
 
-Run the server first. Tests use `/usr/bin/chromium`; `smoke.cjs` also accepts `CHROMIUM_PATH`. Smoke tests cover desktop/mobile input, expense creation and editing, settlements, search, budget updates, plan conversion, theme persistence, and horizontal overflow. Storage tests cover Unicode snapshot links, exports/imports, malformed backups, offline reload, and denied localStorage access. Test data stays in isolated browser contexts.
+The production browser suites run without Firebase config. They verify the local guest workflow; they do not establish that live Google or Firestore access works. The separate Auth emulator tests cover anonymous-to-Google linking and Google credential sign-in. Database rules require the Firestore emulator. The full cloud browser suite also tests actual Firebase SDK saves/restores, offline conflicts and account upgrades against both emulators; see the setup guide and CI workflow.
 
-## Dashboard shortcuts
+## Phone installation and data
 
-The Overview cards are keyboard-accessible shortcuts. Spending opens this month's hangouts and shows your individual share; search respects the date filter, and All time restores the complete history. Upcoming plans opens the plans page, and Monthly budget left opens Budgets.
+On Android, use Chrome's Install app option. On iPhone, open in Safari and use Share → Add to Home Screen. PWA installation and offline use require HTTPS or localhost.
 
-Choose **Me** beside your participant name when creating or editing a hangout. This selection is saved independently of your name. Older hangouts use the participant named You, or the first participant when that name has been changed; open Edit to correct the selection if needed. Existing browser data is retained.
+Signed-in users save hangouts, plans, budget and theme to their account, with a device cache for offline work. Other accounts cannot access those Firestore paths. Changes on different devices use a revision check; a conflict preserves the device draft instead of silently overwriting cloud data.
 
-Run `PLAYWRIGHT_MODULE=/tmp/palsum-browser/node_modules/playwright node tests/dashboard.cjs` with the local server running for desktop/mobile regression checks of the cards, monthly filtering, participant identity and cent rounding.
+Guests have one hangout per guest identity. Plans and additional hangouts require sign-in. Existing larger local ledgers remain available for migration. Choose **Me** beside your name to track your own share after renaming it.
 
-Screenshot previews use demo data: [desktop cards](docs/previews/dashboard-desktop.png), [mobile cards](docs/previews/dashboard-mobile.png), and [monthly spending](docs/previews/monthly-spending.png).
+Sharing still generates read-only snapshots, not live group editing. Anyone with a snapshot link can read its names and amounts. Transfers remain suggestions, not payments.
+
+## Previews
+
+[Open the branch preview](https://palsum-git-codex-accounts-and-cloud-samiaahmedd16-lgtm.vercel.app). Google sign-in activates after the Firebase setup above.
+
+Demo screenshots: [account screen](docs/previews/accounts-desktop.png), [mobile account screen](docs/previews/accounts-mobile.png), [dashboard shortcuts](docs/previews/dashboard-desktop.png).
