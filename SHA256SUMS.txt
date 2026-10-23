@@ -1,0 +1,2 @@
+eda1ef2704730ad34d47b07365cc5449dd07c99a5e184da5d92e68473a352119  palsum-debug.apk
+93e6318330a3db586c3c0ce7e340f4fcacdb2026d5dacebda8e77e353f3bba8d  palsum-release.apk
